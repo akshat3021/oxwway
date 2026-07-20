@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+:root {
+  --background: #0A0B0D;
+  --surface: #15171A;
+  --foreground: #EDEEF0;
+  --accent: #4F7CFF;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-foreground: var(--foreground);
+  --color-accent: var(--accent);
+  
+  --font-display: var(--font-display), sans-serif;
+  --font-sans: var(--font-sans), sans-serif;
+  --font-mono: var(--font-mono), monospace;
+
+  --ease-mechanical: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --text-fluid-h1: clamp(3rem, 8vw, 8rem);
+  --text-fluid-h2: clamp(2rem, 5vw, 5rem);
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.metal-gradient {
+  background: linear-gradient(to bottom right, #8B8D93, #3A3C40);
+}
