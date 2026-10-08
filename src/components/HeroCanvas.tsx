@@ -6,10 +6,24 @@ import { Environment, Float, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useState } from "react";
+import { useIsMobile } from "@/lib/useIsMobile";
 
 gsap.registerPlugin(ScrollTrigger);
 
+export function useAccentColor() {
+  const [color, setColor] = useState("#E8342A"); // fallback
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const val = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim();
+      if (val) setColor(val);
+    }
+  }, []);
+  return color;
+}
+
 function RobotPlaceholder() {
+  const outerGroupRef = useRef<THREE.Group>(null);
   const groupRef = useRef<THREE.Group>(null);
   const headRef = useRef<THREE.Mesh>(null);
   const torsoRef = useRef<THREE.Mesh>(null);
@@ -32,8 +46,8 @@ function RobotPlaceholder() {
     // Assembly sequence
     tl.fromTo(
       headRef.current!.position,
-      { y: 5, opacity: 0 },
-      { y: 1.5, opacity: 1, duration: 1 },
+      { y: 5 },
+      { y: 1.5, duration: 1 },
       0
     )
     .fromTo(
@@ -59,6 +73,14 @@ function RobotPlaceholder() {
     };
   }, []);
 
+  useFrame((state, delta) => {
+    if (outerGroupRef.current) {
+      outerGroupRef.current.rotation.y += delta * 0.1;
+    }
+  });
+
+  const accentColor = useAccentColor();
+
   // Material setup for that premium brushed-metal look
   const metalMaterial = new THREE.MeshStandardMaterial({
     color: "#8B8D93",
@@ -67,14 +89,15 @@ function RobotPlaceholder() {
   });
 
   const accentMaterial = new THREE.MeshStandardMaterial({
-    color: "#4F7CFF",
-    emissive: "#4F7CFF",
+    color: accentColor,
+    emissive: accentColor,
     emissiveIntensity: 0.5,
   });
 
   return (
-    <group ref={groupRef} position={[0, -1, 0]}>
-      <Float speed={2} rotationIntensity={0.2} floatIntensity={0.5}>
+    <group ref={outerGroupRef} position={[0, -1, 0]}>
+      <group ref={groupRef}>
+        <Float speed={2} rotationIntensity={0.2} floatIntensity={0.5}>
         {/* Head */}
         <mesh ref={headRef} position={[0, 1.5, 0]} material={metalMaterial}>
           <boxGeometry args={[0.8, 0.8, 0.8]} />
@@ -99,21 +122,25 @@ function RobotPlaceholder() {
           <cylinderGeometry args={[0.2, 0.2, 1.4]} />
         </mesh>
       </Float>
+      </group>
     </group>
   );
 }
 
 export function HeroCanvas() {
+  const accentColor = useAccentColor();
+  const isMobile = useIsMobile();
   return (
     <div className="absolute inset-0 z-0 pointer-events-none">
       <Canvas
         camera={{ position: [0, 0, 5], fov: 45 }}
-        gl={{ antialias: true, alpha: true }}
+        gl={{ antialias: !isMobile, alpha: true }}
+        dpr={isMobile ? [1, 1.5] : [1, 2]}
       >
-        <ambientLight intensity={0.2} />
-        <directionalLight position={[10, 10, 5]} intensity={1} />
+        <ambientLight intensity={0.4} />
+        <directionalLight position={[10, 10, 5]} intensity={1.5} />
         <directionalLight position={[-10, -10, -5]} intensity={0.5} />
-        <Environment preset="city" />
+        <pointLight position={[0, 2, 5]} intensity={1} color={accentColor} distance={10} />
         <RobotPlaceholder />
       </Canvas>
     </div>

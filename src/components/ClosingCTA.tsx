@@ -4,6 +4,7 @@ import React, { useRef } from "react";
 import { Canvas } from "@react-three/fiber";
 import { Environment, Float } from "@react-three/drei";
 import * as THREE from "three";
+import { useAccentColor } from "./HeroCanvas";
 import Link from "next/link";
 
 function IdleRobot() {
@@ -53,13 +54,14 @@ function IdleRobot() {
 }
 
 export function ClosingCTA() {
+  const accentColor = useAccentColor();
   return (
-    <section className="relative h-screen bg-background border-t border-foreground/10 overflow-hidden flex items-center justify-center">
-      <div className="absolute inset-0 z-0 pointer-events-none opacity-50">
+    <section className="relative py-32 bg-transparent border-t border-foreground/5 overflow-hidden flex items-center justify-center">
+      <div className="absolute inset-0 z-0 pointer-events-none opacity-50 bg-black/60">
         <Canvas camera={{ position: [0, 0, 8], fov: 45 }}>
           <ambientLight intensity={0.1} />
           <directionalLight position={[5, 5, 5]} intensity={0.5} />
-          <Environment preset="city" />
+          <pointLight position={[-5, 5, -5]} intensity={0.5} color={accentColor} />
           <IdleRobot />
         </Canvas>
       </div>

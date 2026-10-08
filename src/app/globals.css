@@ -1,21 +1,55 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0A0B0D;
-  --surface: #15171A;
-  --foreground: #EDEEF0;
-  --accent: #4F7CFF;
+  /* === OXWAY Design Tokens (Dark — Default) === */
+  --bg-base: #0A0B0D;
+  --surface: #111315;
+  --text-primary: #EDEEF0;
+  --text-secondary: #8A8D94;
+  --accent: #E8342A;
+  --watermark-tone: rgba(237, 238, 240, 0.08); /* graphite titanium */
+
+  /* Backwards-compatible aliases for existing components */
+  --background: var(--bg-base);
+  --foreground: var(--text-primary);
+
+  /* Glass surfaces */
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  --glass-border: rgba(237, 238, 240, 0.08);
+  --glass-shadow: rgba(0, 0, 0, 0.6);
+
+  /* Transitions */
+  --transition-theme: background-color 0.7s cubic-bezier(0.25, 1, 0.5, 1),
+                      color 0.7s cubic-bezier(0.25, 1, 0.5, 1),
+                      border-color 0.7s cubic-bezier(0.25, 1, 0.5, 1),
+                      opacity 0.7s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.light {
+  --bg-base: #F5F4F1;
+  --surface: #FFFFFF;
+  --text-primary: #141517;
+  --text-secondary: #6B6E75;
+  --accent: #E8342A;
+  --watermark-tone: rgba(232, 52, 42, 0.07); /* red-tinted tone */
+
+  --background: var(--bg-base);
+  --foreground: var(--text-primary);
+
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(20, 21, 23, 0.1);
+  --glass-shadow: rgba(0, 0, 0, 0.06);
 }
 
 @theme inline {
-  --color-background: var(--background);
+  --color-background: var(--bg-base);
   --color-surface: var(--surface);
-  --color-foreground: var(--foreground);
+  --color-foreground: var(--text-primary);
   --color-accent: var(--accent);
-  
-  --font-display: var(--font-display), sans-serif;
-  --font-sans: var(--font-sans), sans-serif;
-  --font-mono: var(--font-mono), monospace;
+
+  --font-display: 'Outfit', sans-serif;
+  --font-sans: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
 
   --ease-mechanical: cubic-bezier(0.16, 1, 0.3, 1);
 
@@ -23,14 +57,138 @@
   --text-fluid-h2: clamp(2rem, 5vw, 5rem);
 }
 
+/* ===== Base Styles ===== */
+html {
+  scroll-behavior: smooth;
+}
+
 body {
-  background-color: var(--background);
-  color: var(--foreground);
+  background-color: var(--bg-base);
+  color: var(--text-primary);
   font-family: var(--font-sans), sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: var(--transition-theme);
 }
 
+/* ===== Focus States ===== */
+*:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
+/* ===== Metal Gradient ===== */
 .metal-gradient {
   background: linear-gradient(to bottom right, #8B8D93, #3A3C40);
+}
+
+/* ===== Architectural Grid Background ===== */
+.bg-ambience {
+  position: relative;
+}
+.bg-ambience::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-image:
+    linear-gradient(to right, var(--text-primary) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--text-primary) 1px, transparent 1px);
+  background-size: 80px 80px;
+  opacity: 0.025;
+  pointer-events: none;
+  transition: opacity 0.7s ease;
+}
+.bg-ambience::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  opacity: 0.018;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  pointer-events: none;
+}
+
+/* ===== Watermark Bull ===== */
+.bull-watermark {
+  transition: filter 0.7s ease, opacity 0.7s ease;
+}
+.dark .bull-watermark {
+  filter: invert(1) brightness(0.85) contrast(0.9);
+  mix-blend-mode: screen;
+  opacity: 0.10; /* Dark theme: light gray/white tone at ~10% opacity */
+}
+.light .bull-watermark {
+  filter: sepia(1) saturate(12) hue-rotate(325deg) brightness(0.5) contrast(1.1);
+  mix-blend-mode: multiply;
+  opacity: 0.08; /* Light theme: refined red-tinted tone at ~8% opacity */
+}
+
+/* ===== CRT Scanlines (Dark only) ===== */
+.crt-lines {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.08) 2px,
+    rgba(0, 0, 0, 0.08) 4px
+  );
+}
+
+/* ===== Scroll-Driven Watermark Parallax ===== */
+@keyframes bull-drift {
+  from { transform: translateY(0px); }
+  to   { transform: translateY(-40px); }
+}
+.bull-parallax {
+  animation: bull-drift linear both;
+  animation-timeline: scroll(root);
+  animation-range: 0vh 100vh;
+}
+
+/* ===== Eye Flame Animation ===== */
+@keyframes flame-flicker {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 0.9;
+    filter: drop-shadow(0 0 6px #FF4500) drop-shadow(0 0 14px #E8342A) drop-shadow(0 0 28px rgba(232, 52, 42, 0.6));
+  }
+  25% {
+    transform: scale(1.08) rotate(-2deg);
+    opacity: 1;
+    filter: drop-shadow(0 0 10px #FF6B00) drop-shadow(0 0 20px #E8342A) drop-shadow(0 0 36px rgba(255, 69, 0, 0.75));
+  }
+  50% {
+    transform: scale(0.95) rotate(1deg);
+    opacity: 0.85;
+    filter: drop-shadow(0 0 5px #FF4500) drop-shadow(0 0 12px #E8342A) drop-shadow(0 0 22px rgba(232, 52, 42, 0.5));
+  }
+  75% {
+    transform: scale(1.12) rotate(-1deg);
+    opacity: 0.98;
+    filter: drop-shadow(0 0 12px #FFA500) drop-shadow(0 0 24px #E8342A) drop-shadow(0 0 40px rgba(255, 34, 0, 0.8));
+  }
+}
+.flame-eye {
+  transform-origin: 585px 375px;
+  animation: flame-flicker 2.5s ease-in-out infinite;
+}
+
+/* ===== Scrollbar Hide (for native swipeable strips, e.g. mobile capability cards) ===== */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* ===== Reduced Motion ===== */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

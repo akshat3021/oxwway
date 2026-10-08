@@ -1,0 +1,167 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  // URL moved to prisma.config.ts as per Prisma 7 requirements
+}
+
+enum ContentStatus {
+  draft
+  published
+}
+
+model HomepageContent {
+  id                    Int       @id @default(autoincrement())
+  heroHeadline          String?
+  heroSubheadline       String?
+  heroDescription       String?
+  ctaLabel              String?
+  ctaLink               String?
+  systemStatusLabel     String?
+  capabilityCardTag     String?
+  capabilityCardTitle   String?
+  capabilityCardDescription String?
+  scrollCueText         String?
+  accessLevelReadout    String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  auditLogs             AuditLog[] @relation("HomepageContentAuditLogs")
+}
+
+model NavItem {
+  id            Int      @id @default(autoincrement())
+  label         String
+  destination   String
+  displayOrder  Int
+  showPrimary   Boolean @default(true)
+  showFooter    Boolean @default(false)
+  showRadial    Boolean @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  auditLogs     AuditLog[] @relation("NavItemAuditLogs")
+}
+
+model Product {
+  id          Int           @id @default(autoincrement())
+  name        String
+  tagline     String?
+  description String?
+  specs       Json?
+  mediaRefs   String[]
+  slug        String @unique
+  status      ContentStatus @default(draft)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  auditLogs   AuditLog[] @relation("ProductAuditLogs")
+}
+
+model GalleryItem {
+  id           Int      @id @default(autoincrement())
+  mediaRef     String
+  caption      String?
+  category     String?
+  displayOrder Int
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  auditLogs    AuditLog[] @relation("GalleryItemAuditLogs")
+}
+
+model BlogPost {
+  id                Int          @id @default(autoincrement())
+  title             String
+  slug              String @unique
+  excerpt           String?
+  body              String?
+  coverImage        String?
+  tags              String[]
+  publishDate       DateTime?
+  seoTitle          String?
+  seoDescription    String?
+  status            ContentStatus @default(draft)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  auditLogs         AuditLog[] @relation("BlogPostAuditLogs")
+}
+
+model TeamMember {
+  id           Int      @id @default(autoincrement())
+  name         String
+  role         String
+  bio          String?
+  photoRef     String?
+  displayOrder Int
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  auditLogs    AuditLog[] @relation("TeamMemberAuditLogs")
+}
+
+model JobListing {
+  id          Int      @id @default(autoincrement())
+  title       String
+  department  String?
+  location    String?
+  description String?
+  status      String @default("open")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  auditLogs   AuditLog[] @relation("JobListingAuditLogs")
+}
+
+model CompanyInfo {
+  id               Int      @id @default(autoincrement())
+  aboutContent     String?
+  visionStatement  String?
+  contactDetails   String?
+  socialLinks      Json?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  auditLogs        AuditLog[] @relation("CompanyInfoAuditLogs")
+}
+
+model SiteSettings {
+  id                Int      @id @default(autoincrement())
+  defaultTheme      String @default("light")
+  showBullWatermark Boolean @default(true)
+  otherToggles      Json?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  auditLogs         AuditLog[] @relation("SiteSettingsAuditLogs")
+}
+
+model AuditLog {
+  id               Int      @id @default(autoincrement())
+  userId           String?
+  action           String
+  model            String
+  recordId         Int
+  timestamp        DateTime @default(now())
+
+  homepageContentId Int?
+  homepageContent   HomepageContent? @relation("HomepageContentAuditLogs", fields: [homepageContentId], references: [id])
+
+  navItemId        Int?
+  navItem          NavItem? @relation("NavItemAuditLogs", fields: [navItemId], references: [id])
+
+  productId        Int?
+  product          Product? @relation("ProductAuditLogs", fields: [productId], references: [id])
+
+  galleryItemId    Int?
+  galleryItem      GalleryItem? @relation("GalleryItemAuditLogs", fields: [galleryItemId], references: [id])
+
+  blogPostId       Int?
+  blogPost         BlogPost? @relation("BlogPostAuditLogs", fields: [blogPostId], references: [id])
+
+  teamMemberId     Int?
+  teamMember       TeamMember? @relation("TeamMemberAuditLogs", fields: [teamMemberId], references: [id])
+
+  jobListingId     Int?
+  jobListing       JobListing? @relation("JobListingAuditLogs", fields: [jobListingId], references: [id])
+
+  companyInfoId    Int?
+  companyInfo      CompanyInfo? @relation("CompanyInfoAuditLogs", fields: [companyInfoId], references: [id])
+
+  siteSettingsId   Int?
+  siteSettings     SiteSettings? @relation("SiteSettingsAuditLogs", fields: [siteSettingsId], references: [id])
+}

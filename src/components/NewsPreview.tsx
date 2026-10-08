@@ -27,7 +27,7 @@ const news = [
 
 export function NewsPreview() {
   return (
-    <section className="py-24 bg-background border-t border-foreground/10 px-[5vw]">
+    <section className="py-24 bg-transparent border-t border-foreground/5 px-[5vw] backdrop-blur-sm">
       <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-end mb-16">
         <div>
           <h2 className="font-display text-4xl uppercase text-foreground">
@@ -44,11 +44,17 @@ export function NewsPreview() {
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
         {news.map((item, index) => (
-          <div 
+          <Link
+            href={`/blog/${item.id}`}
             key={item.id} 
-            className={`flex flex-col justify-between border border-foreground/10 p-8 hover:bg-surface transition-colors ${
+            className={`group flex flex-col justify-between border p-8 hover:-translate-y-2 hover:border-accent hover:shadow-[0_0_20px_rgba(232,52,42,0.15)] transition-all duration-500 ease-out ${
               index === 0 ? "md:col-span-12 lg:col-span-6" : "md:col-span-6 lg:col-span-3"
             }`}
+            style={{ 
+              backgroundColor: 'var(--glass-bg)', 
+              borderColor: 'var(--glass-border)',
+              boxShadow: '0 10px 40px var(--glass-shadow)'
+            }}
           >
             <div className="flex justify-between items-start mb-16">
               <span className="font-mono text-[10px] text-accent tracking-widest uppercase border border-accent/30 px-2 py-1">
@@ -66,7 +72,7 @@ export function NewsPreview() {
                 {item.excerpt}
               </p>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
     </section>

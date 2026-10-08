@@ -26,14 +26,14 @@ export function ProofLayer() {
   }, []);
 
   const stats = [
-    { label: "UPTIME", value: 99.999, suffix: "%", decimals: 3 },
-    { label: "DEGREES OF FREEDOM", value: 44, suffix: "", decimals: 0 },
-    { label: "LATENCY", value: 1.2, suffix: "ms", decimals: 1 },
-    { label: "ACTUATION FORCE", value: 1200, suffix: "N", decimals: 0 },
+    { label: "UPTIME", value: 99.8, suffix: "%", decimals: 1 },
+    { label: "DEGREES OF FREEDOM", value: 42, suffix: "", decimals: 0 },
+    { label: "LATENCY", value: 8, suffix: "ms", decimals: 0 },
+    { label: "ACTUATION FORCE", value: 450, suffix: "N", decimals: 0 },
   ];
 
   return (
-    <section ref={containerRef} className="py-32 bg-background border-b border-foreground/10 px-[5vw]">
+    <section ref={containerRef} className="py-32 bg-transparent border-t border-b border-foreground/5 px-[5vw] backdrop-blur-sm">
       <div className="max-w-6xl mx-auto">
         <div className="mb-16">
           <h2 className="font-display text-4xl uppercase text-foreground">
@@ -68,18 +68,27 @@ export function ProofLayer() {
 }
 
 function Counter({ end, decimals }: { end: number, decimals: number }) {
-  const [val, setVal] = useState(0);
-  const valRef = useRef({ val: 0 });
+  const nodeRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
-    const tween = gsap.to(valRef.current, {
+    if (!nodeRef.current) return;
+    const obj = { val: 0 };
+    
+    const tween = gsap.to(obj, {
       val: end,
       duration: 2,
       ease: "power2.out",
-      onUpdate: () => setVal(valRef.current.val)
+      onUpdate: () => {
+        if (nodeRef.current) {
+          nodeRef.current.textContent = obj.val.toFixed(decimals);
+        }
+      }
     });
-    return () => tween.kill();
-  }, [end]);
+    
+    return () => {
+      tween.kill();
+    };
+  }, [end, decimals]);
 
-  return <>{val.toFixed(decimals)}</>;
+  return <span ref={nodeRef}>{(0).toFixed(decimals)}</span>;
 }
