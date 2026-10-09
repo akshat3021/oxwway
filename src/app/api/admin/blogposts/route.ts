@@ -3,7 +3,7 @@
 
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { prisma } from '@/prisma/prisma.config';
+import { prisma } from '@/lib/prisma';
 import { requireRoles } from '@/middleware/requireRoles';
 import { logAction } from '@/lib/audit';
 
