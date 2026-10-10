@@ -1,31 +1,15 @@
 import React from "react";
 import Link from "next/link";
+import type { LandingPost } from "@/lib/landing";
 
-const news = [
-  {
-    id: "01",
-    title: "Version 4.2 Actuation Update Deployed",
-    excerpt: "New firmware increases joint torque efficiency by 12% across all operational ranges.",
-    date: "2024.10.15",
-    tag: "ENGINEERING"
-  },
-  {
-    id: "02",
-    title: "Optical Array Calibration Overhaul",
-    excerpt: "How we achieved sub-millimeter depth perception in low-light environments without thermal compensation.",
-    date: "2024.09.28",
-    tag: "RESEARCH"
-  },
-  {
-    id: "03",
-    title: "Facility Expansion: Lab 04",
-    excerpt: "Scaling our stress-testing infrastructure for next-generation bipedal locomotion.",
-    date: "2024.09.10",
-    tag: "COMPANY"
-  }
-];
+/** Grid span that adapts to however many posts exist (1-3). */
+function spanFor(index: number, total: number): string {
+  if (total === 1) return "md:col-span-12";
+  if (total === 2) return "md:col-span-6";
+  return index === 0 ? "md:col-span-12 lg:col-span-6" : "md:col-span-6 lg:col-span-3";
+}
 
-export function NewsPreview() {
+export function NewsPreview({ posts }: { posts: LandingPost[] }) {
   return (
     <section className="py-24 bg-transparent border-t border-foreground/5 px-[5vw] backdrop-blur-sm">
       <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-end mb-16">
@@ -43,20 +27,18 @@ export function NewsPreview() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
-        {news.map((item, index) => (
+        {posts.map((item, index) => (
           <Link
-            href={`/blog/${item.id}`}
+            href={`/blog/${item.slug}`}
             key={item.id} 
-            className={`group flex flex-col justify-between border p-8 hover:-translate-y-2 hover:border-accent hover:shadow-[0_0_20px_rgba(232,52,42,0.15)] transition-all duration-500 ease-out ${
-              index === 0 ? "md:col-span-12 lg:col-span-6" : "md:col-span-6 lg:col-span-3"
-            }`}
+            className={`group flex flex-col justify-between border p-6 md:p-8 hover:-translate-y-2 hover:border-accent hover:shadow-[0_0_20px_color-mix(in_srgb,var(--accent)_15%,transparent)] transition-all duration-500 ease-out ${spanFor(index, posts.length)}`}
             style={{ 
               backgroundColor: 'var(--glass-bg)', 
               borderColor: 'var(--glass-border)',
               boxShadow: '0 10px 40px var(--glass-shadow)'
             }}
           >
-            <div className="flex justify-between items-start mb-16">
+            <div className="flex justify-between items-start mb-10 md:mb-16">
               <span className="font-mono text-[10px] text-accent tracking-widest uppercase border border-accent/30 px-2 py-1">
                 {item.tag}
               </span>

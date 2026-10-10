@@ -18,7 +18,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>("dark");
   const [mounted, setMounted] = useState(false);
 
-  // On mount, read from localStorage (default to dark)
+  // On mount, sync React state with the stored preference (default dark)
   useEffect(() => {
     const stored = localStorage.getItem("oxway-theme") as Theme | null;
     const initial: Theme = stored === "light" ? "light" : "dark";
@@ -39,9 +39,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setTheme((prev) => (prev === "dark" ? "light" : "dark"));
   };
 
-  // Prevent flash of wrong theme: render nothing until mounted
-  if (!mounted) return null;
-
+  // Children always render (server-side too). The correct theme class is
+  // applied to <html> before first paint by the inline script in layout.tsx,
+  // so there is no flash and no need to hide the page until hydration.
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
       {children}

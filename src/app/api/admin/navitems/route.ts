@@ -6,6 +6,7 @@ import type { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireRoles } from '@/middleware/requireRoles';
 import { logAction } from '@/lib/audit';
+import { revalidatePublicSite } from '@/lib/revalidate';
 
 export async function GET(request: NextRequest) {
   // Admin and editor can read NavItems
@@ -26,6 +27,7 @@ export async function POST(request: NextRequest) {
   const data = await request.json();
   const navItem = await prisma.navItem.create({ data });
   await logAction(auth.email, 'create', 'NavItem', navItem.id);
+  revalidatePublicSite();
   return NextResponse.json(navItem, { status: 201 });
 }
 
@@ -37,6 +39,7 @@ export async function PUT(request: NextRequest) {
   const { id, ...updates } = await request.json();
   const updated = await prisma.navItem.update({ where: { id }, data: updates });
   await logAction(auth.email, 'update', 'NavItem', id);
+  revalidatePublicSite();
   return NextResponse.json(updated);
 }
 
@@ -48,5 +51,6 @@ export async function DELETE(request: NextRequest) {
   const { id } = await request.json();
   await prisma.navItem.delete({ where: { id } });
   await logAction(auth.email, 'delete', 'NavItem', id);
+  revalidatePublicSite();
   return NextResponse.json({ success: true });
 }

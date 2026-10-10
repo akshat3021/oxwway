@@ -18,7 +18,7 @@ function createClient(): PrismaClient {
   // build time (when Next.js imports route modules) will not crash the
   // build; it only surfaces as an error if a query actually runs.
   const connectionString = process.env.DATABASE_URL;
-  const pool = new Pool({ connectionString });
+  const pool = new Pool({ connectionString, connectionTimeoutMillis: 5000, max: 5 });
   const adapter = new PrismaPg(pool);
   return new PrismaClient({ adapter });
 }

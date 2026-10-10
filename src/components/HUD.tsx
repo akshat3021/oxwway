@@ -2,11 +2,14 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { NAV_ITEMS } from "@/lib/nav";
 import { useTheme } from "./ThemeProvider";
 import { RadialNav } from "./RadialNav";
 
 export function HUD({ children }: { children: React.ReactNode }) {
   const { theme, toggleTheme } = useTheme();
+  const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [isRadialOpen, setIsRadialOpen] = useState(false);
 
@@ -56,8 +59,34 @@ export function HUD({ children }: { children: React.ReactNode }) {
           </span>
         </Link>
 
+        {/* Center: primary page links (desktop). Below xl the radial / list
+            navigator is the way to move around. */}
+        <nav
+          aria-label="Primary"
+          className="hidden xl:flex flex-1 items-center justify-center gap-5 px-6"
+        >
+          {NAV_ITEMS.map((item) => {
+            const active =
+              pathname === item.href || pathname.startsWith(item.href + "/");
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-current={active ? "page" : undefined}
+                className="relative py-1 font-mono text-[10px] uppercase tracking-[0.16em] transition-colors hover:text-accent"
+                style={{ color: active ? "var(--text-primary)" : "var(--text-secondary)" }}
+              >
+                {item.label}
+                {active && (
+                  <span className="absolute -bottom-0.5 left-0 right-0 h-px bg-accent" />
+                )}
+              </Link>
+            );
+          })}
+        </nav>
+
         {/* Right: Status + Upper-Right Radial Nav Trigger + Theme toggle */}
-        <div className="flex items-center gap-4 flex-shrink-0 ml-auto">
+        <div className="flex items-center gap-3 md:gap-4 flex-shrink-0 ml-auto xl:ml-0">
           {/* Status Readout */}
           <div className="hidden sm:flex items-center gap-2 font-mono text-[10px] uppercase tracking-widest" style={{ color: "var(--text-secondary)" }}>
             <span
@@ -75,7 +104,7 @@ export function HUD({ children }: { children: React.ReactNode }) {
             style={{
               color: isRadialOpen ? "var(--accent)" : "var(--text-secondary)",
               borderColor: isRadialOpen ? "var(--accent)" : "var(--glass-border)",
-              backgroundColor: isRadialOpen ? "rgba(232, 52, 42, 0.08)" : "transparent",
+              backgroundColor: isRadialOpen ? "color-mix(in srgb, var(--accent) 10%, transparent)" : "transparent",
             }}
             onMouseEnter={(e) => {
               (e.currentTarget as HTMLButtonElement).style.color = "var(--accent)";

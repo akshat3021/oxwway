@@ -41,7 +41,7 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 w-full md:w-auto">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-8 w-full md:w-auto">
           <div className="flex flex-col gap-3">
             <span className="font-mono text-xs opacity-40 uppercase tracking-widest mb-2">Systems</span>
             <Link href="/products" className="font-mono text-xs uppercase hover:text-accent transition-colors">Products</Link>
@@ -58,13 +58,6 @@ export function Footer() {
           <div className="flex flex-col gap-3">
             <span className="font-mono text-xs opacity-40 uppercase tracking-widest mb-2">Connect</span>
             <Link href="/contact" className="font-mono text-xs uppercase hover:text-accent transition-colors">Contact</Link>
-            <a href="#" className="font-mono text-xs uppercase hover:text-accent transition-colors">GitHub</a>
-            <a href="#" className="font-mono text-xs uppercase hover:text-accent transition-colors">X</a>
-          </div>
-          <div className="flex flex-col gap-3">
-            <span className="font-mono text-xs opacity-40 uppercase tracking-widest mb-2">Legal</span>
-            <a href="#" className="font-mono text-xs uppercase hover:text-accent transition-colors">Privacy</a>
-            <a href="#" className="font-mono text-xs uppercase hover:text-accent transition-colors">Terms</a>
           </div>
         </div>
 

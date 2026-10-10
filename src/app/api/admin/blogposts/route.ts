@@ -6,6 +6,7 @@ import type { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireRoles } from '@/middleware/requireRoles';
 import { logAction } from '@/lib/audit';
+import { revalidatePublicSite } from '@/lib/revalidate';
 
 export async function GET(request: NextRequest) {
   // Admin and editor can read all blog posts (drafts, published, archived).
@@ -30,6 +31,7 @@ export async function POST(request: NextRequest) {
 
   const post = await prisma.blogPost.create({ data });
   await logAction(auth.email, 'create', 'BlogPost', post.id);
+  revalidatePublicSite();
   return NextResponse.json(post, { status: 201 });
 }
 
@@ -47,6 +49,7 @@ export async function PUT(request: NextRequest) {
 
   const updated = await prisma.blogPost.update({ where: { id }, data: updates });
   await logAction(auth.email, 'update', 'BlogPost', id);
+  revalidatePublicSite();
   return NextResponse.json(updated);
 }
 
@@ -57,5 +60,6 @@ export async function DELETE(request: NextRequest) {
   const { id } = await request.json();
   await prisma.blogPost.delete({ where: { id } });
   await logAction(auth.email, 'delete', 'BlogPost', id);
+  revalidatePublicSite();
   return NextResponse.json({ success: true });
 }

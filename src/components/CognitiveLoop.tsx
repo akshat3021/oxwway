@@ -64,7 +64,7 @@ export function CognitiveLoop() {
   }, []);
 
   return (
-    <section ref={containerRef} className="relative py-32 bg-transparent border-t border-b border-foreground/5 overflow-hidden flex flex-col md:flex-row">
+    <section ref={containerRef} className="relative py-16 md:py-32 bg-transparent border-t border-b border-foreground/5 overflow-hidden flex flex-col md:flex-row">
       
       {/* Sticky SVG Diagram Side */}
       <div className="w-full md:w-1/2 md:h-screen md:sticky top-0 flex items-center justify-center border-r border-foreground/10 p-8">
@@ -103,27 +103,27 @@ export function CognitiveLoop() {
       </div>
 
       {/* Scrolling Text Side */}
-      <div className="w-full md:w-1/2 px-[10vw] md:px-[5vw] py-[30vh]">
+      <div className="w-full md:w-1/2 px-6 md:px-[5vw] py-[8vh] md:py-[30vh]">
         
-        <div id="step-1" className="min-h-[70vh] flex flex-col justify-center">
+        <div id="step-1" className="min-h-[45vh] md:min-h-[70vh] flex flex-col justify-center">
           <div className="font-mono text-xs text-accent uppercase tracking-widest mb-4">[ PHASE 01 ]</div>
-          <h3 className="font-display text-4xl uppercase mb-6 text-foreground">Sensory Ingestion</h3>
+          <h3 className="font-display text-3xl md:text-4xl uppercase mb-6 text-foreground">Sensory Ingestion</h3>
           <p className="font-mono text-sm text-foreground/70 leading-relaxed uppercase">
             Millions of data points stream from LiDAR, optical, and tactile sensors every millisecond. The system builds a high-fidelity semantic map of the environment instantly.
           </p>
         </div>
 
-        <div id="step-2" className="min-h-[70vh] flex flex-col justify-center">
+        <div id="step-2" className="min-h-[45vh] md:min-h-[70vh] flex flex-col justify-center">
           <div className="font-mono text-xs text-accent uppercase tracking-widest mb-4">[ PHASE 02 ]</div>
-          <h3 className="font-display text-4xl uppercase mb-6 text-foreground">Cognitive Synthesis</h3>
+          <h3 className="font-display text-3xl md:text-4xl uppercase mb-6 text-foreground">Cognitive Synthesis</h3>
           <p className="font-mono text-sm text-foreground/70 leading-relaxed uppercase">
             Raw data is parsed through proprietary neural architectures. The system doesn't just see—it understands context, predicts intent, and formulates response strategies in real-time.
           </p>
         </div>
 
-        <div id="step-3" className="min-h-[70vh] flex flex-col justify-center">
+        <div id="step-3" className="min-h-[45vh] md:min-h-[70vh] flex flex-col justify-center">
           <div className="font-mono text-xs text-accent uppercase tracking-widest mb-4">[ PHASE 03 ]</div>
-          <h3 className="font-display text-4xl uppercase mb-6 text-foreground">Precision Actuation</h3>
+          <h3 className="font-display text-3xl md:text-4xl uppercase mb-6 text-foreground">Precision Actuation</h3>
           <p className="font-mono text-sm text-foreground/70 leading-relaxed uppercase">
             Decisions translate to physical force. Multi-axis joints engage with sub-millimeter accuracy, executing the computed motion profile safely and efficiently.
           </p>

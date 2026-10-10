@@ -3,16 +3,8 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useTheme } from "./ThemeProvider";
+import { NAV_ITEMS } from "@/lib/nav";
 
-const NAV_ITEMS = [
-  { label: "About", href: "/about", code: "NAV.01", desc: "Entity story & build log" },
-  { label: "Vision", href: "/vision", code: "NAV.02", desc: "Core philosophy & tenets" },
-  { label: "Products", href: "/products", code: "NAV.03", desc: "Robotic platforms catalog" },
-  { label: "Gallery", href: "/gallery", code: "NAV.04", desc: "Telemetry & media archive" },
-  { label: "Blog", href: "/blog", code: "NAV.05", desc: "Engineering dispatches" },
-  { label: "Team", href: "/team", code: "NAV.06", desc: "Engineering faculty & builders" },
-  { label: "Contact", href: "/contact", code: "NAV.07", desc: "Initiate direct link" },
-];
 
 function polarToCartesian(centerX: number, centerY: number, radius: number, angleInDegrees: number) {
   const angleInRadians = ((angleInDegrees - 90) * Math.PI) / 180.0;

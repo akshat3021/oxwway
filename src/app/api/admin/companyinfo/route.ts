@@ -6,6 +6,7 @@ import type { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireRoles } from '@/middleware/requireRoles';
 import { logAction } from '@/lib/audit';
+import { revalidatePublicSite } from '@/lib/revalidate';
 
 export async function GET(request: NextRequest) {
   // Admin and editor can read company info
@@ -22,6 +23,7 @@ export async function POST(request: NextRequest) {
   const data = await request.json();
   const created = await prisma.companyInfo.create({ data });
   await logAction(auth.email, 'create', 'CompanyInfo', created.id);
+  revalidatePublicSite();
   return NextResponse.json(created, { status: 201 });
 }
 
@@ -32,6 +34,7 @@ export async function PUT(request: NextRequest) {
   const { id, ...updates } = await request.json();
   const updated = await prisma.companyInfo.update({ where: { id }, data: updates });
   await logAction(auth.email, 'update', 'CompanyInfo', id);
+  revalidatePublicSite();
   return NextResponse.json(updated);
 }
 
@@ -42,5 +45,6 @@ export async function DELETE(request: NextRequest) {
   const { id } = await request.json();
   await prisma.companyInfo.delete({ where: { id } });
   await logAction(auth.email, 'delete', 'CompanyInfo', id);
+  revalidatePublicSite();
   return NextResponse.json({ success: true });
 }

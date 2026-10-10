@@ -12,8 +12,6 @@
   "dependencies": {
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.9.0",
-    "@react-three/drei": "^10.7.7",
-    "@react-three/fiber": "^9.6.1",
     "@types/pg": "^8.20.4",
     "framer-motion": "^12.42.2",
     "gsap": "^3.15.0",
