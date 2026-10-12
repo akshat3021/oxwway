@@ -37,7 +37,7 @@ jobs:
           --health-cmd "pg_isready -U oxway -d oxway_ci"
           --health-interval 5s --health-timeout 3s --health-retries 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -90,7 +90,7 @@ jobs:
       SEED_ADMIN_EMAIL: e2e-admin@oxway.test
       SEED_ADMIN_PASSWORD: e2e-correct-horse-battery-staple
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
