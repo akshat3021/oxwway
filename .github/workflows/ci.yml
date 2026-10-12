@@ -1,0 +1,109 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: "22"
+  DATABASE_URL: postgresql://oxway:oxway_ci_pw@127.0.0.1:5432/oxway_ci
+  TEST_DATABASE_URL: postgresql://oxway:oxway_ci_pw@127.0.0.1:5432/oxway_ci
+  APP_ENV: development
+  APP_ORIGIN: http://localhost:3000
+  LOG_LEVEL: silent
+
+jobs:
+  verify:
+    name: Lint · Typecheck · Test · Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: oxway
+          POSTGRES_PASSWORD: oxway_ci_pw
+          POSTGRES_DB: oxway_ci
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U oxway -d oxway_ci"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+
+      - name: Apply migrations to a clean database
+        run: npm run db:migrate
+
+      - name: Migrations match prisma/schema.prisma (no drift)
+        run: npx prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --exit-code
+
+      - name: Unit + integration tests
+        run: npm test
+
+      - name: Production build
+        run: npm run build
+
+      # Blocking: any CRITICAL advisory in production dependencies (this is the
+      # level that flagged the vulnerable Next.js releases). Known, reviewed
+      # high-severity findings in Prisma CLI tooling are listed in docs/SECURITY.md.
+      - name: Dependency audit (block on critical)
+        run: npm audit --omit=dev --audit-level=critical
+
+      # Informational: full report so nothing is hidden. Never blocks.
+      - name: Dependency audit (full report)
+        continue-on-error: true
+        run: npm audit
+
+  e2e:
+    name: End-to-end (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs: verify
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: oxway
+          POSTGRES_PASSWORD: oxway_ci_pw
+          POSTGRES_DB: oxway_ci
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U oxway -d oxway_ci"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    env:
+      SEED_ADMIN_EMAIL: e2e-admin@oxway.test
+      SEED_ADMIN_PASSWORD: e2e-correct-horse-battery-staple
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run db:migrate
+      - run: npm run db:seed
+      - run: npm run build
+      - run: npm run e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

@@ -1,36 +1,83 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# OXWAY
 
-## Getting Started
+Marketing website and content-management admin for OXWAY, built with Next.js (App Router), PostgreSQL and Prisma.
 
-First, run the development server:
+| Area | What it is |
+|---|---|
+| **Public site** | Server-rendered pages (home, about, vision, products, gallery, blog, team, careers, contact). Static + refreshed every 60 s and instantly after any admin edit. |
+| **Admin** (`/admin`) | Session-authenticated CMS for non-technical staff: edit homepage text, manage blog/products/team/careers/gallery, read contact messages, manage users, view the audit log. |
+| **API** (`/api/*`) | Thin route handlers over a service layer. One error/response contract. |
+
+## Quick start (local)
+
+Requirements: **Node 22+**, **Docker** (for PostgreSQL), npm.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env              # then set SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD (12+ chars)
+docker compose up -d              # PostgreSQL on 127.0.0.1:5432
+npm ci
+npm run db:migrate                # apply migrations
+npm run db:seed                   # create the first administrator (safe to re-run)
+npm run dev                       # http://localhost:3000  ·  admin at /admin
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+After seeding, remove `SEED_ADMIN_PASSWORD` from `.env`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Everyday commands
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Command | Purpose |
+|---|---|
+| `npm run dev` | Dev server |
+| `npm run lint` · `npm run typecheck` | Static checks |
+| `npm test` | Unit + integration tests (needs the dev PostgreSQL; uses `TEST_DATABASE_URL` or `oxway_test`) |
+| `npm run e2e` | Playwright browser tests (needs a built app + seeded admin, see CI) |
+| `npm run build` · `npm start` | Production build / server |
+| `npm run db:migrate` | Apply pending migrations (`prisma migrate deploy`) |
+| `npm run db:migrate:dev` | Create a new migration while developing |
+| `npm run db:prune` | Data-retention job (run daily) |
+| `npm run admin:reset` | Break-glass admin password recovery (see docs/OPERATIONS.md) |
+| `npm run smoke -- <url>` | Post-deploy smoke test against a running server |
 
-## Learn More
+Create the test database once: `createdb oxway_test` (or point `TEST_DATABASE_URL` at any empty database), then run `npm run db:migrate` against it by temporarily setting `DATABASE_URL`.
 
-To learn more about Next.js, take a look at the following resources:
+## Project layout
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+prisma/                 schema.prisma + SQL migrations (source of truth for the data model)
+src/
+  app/                  Routes. Public pages = Server Components. Thin route handlers.
+    admin/              Admin UI. (auth)/login, (panel)/… guarded by a server-side session check.
+      _components/ _lib/   Admin-only code (lint blocks importing public components, and vice-versa)
+    api/                auth, admin/*, public/contact, health, ready
+  components/           Public-site UI
+  lib/                  Client-safe helpers (nav list, markdown parser, shared types)
+  server/               ALL server-only code (enforced by `server-only`)
+    config/             validated environment
+    db/                 the single Prisma client
+    auth/               password hashing, sessions, cookies, permissions, login/lockout
+    http/               route wrapper (auth, CSRF, rate limit, errors, logging), response contract
+    services/           business rules: content CRUD, users, contact, audit, public reads, flags
+    validation/         strict zod request schemas
+scripts/                seed, prune, smoke
+tests/                  unit/, integration/ (real PostgreSQL), e2e/ (Playwright)
+docs/                   ARCHITECTURE, SECURITY, PRIVACY, OPERATIONS
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+**Rule of thumb:** routes call services; only services touch the database; only `src/server` may import `@/server/db`. Adding a content type = a Prisma model + a zod schema + one entry in `server/services/content.ts` + one entry in `app/admin/_lib/resources.ts`.
 
-## Deploy on Vercel
+## Deploying (Vercel + managed PostgreSQL)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Create a PostgreSQL database per environment (e.g. Neon, Supabase, RDS).
+2. In Vercel → Settings → Environment Variables set `DATABASE_URL`, `APP_ORIGIN` (e.g. `https://oxway.io`), `APP_ENV` (`staging`/`production`). Optional: see `.env.example`.
+3. From a trusted machine/CI with that `DATABASE_URL`: `npm run db:migrate`, then `npm run db:seed` (once, with `SEED_ADMIN_*`).
+4. Deploy. Verify with `SMOKE_ADMIN_EMAIL=… SMOKE_ADMIN_PASSWORD=… npm run smoke -- https://your-domain`.
+5. Schedule `npm run db:prune` daily. See [docs/OPERATIONS.md](docs/OPERATIONS.md).
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Do **not** use GitHub Pages: it only hosts static files, and this app needs a server (database, API, admin).
+
+## Further reading
+
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): design decisions and trade-offs
+- [docs/SECURITY.md](docs/SECURITY.md): controls, threat notes, known gaps
+- [docs/PRIVACY.md](docs/PRIVACY.md): personal data inventory, retention, erasure
+- [docs/OPERATIONS.md](docs/OPERATIONS.md): environments, migrations, backups, monitoring, rollback

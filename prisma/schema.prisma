@@ -1,10 +1,25 @@
+// OXWAY data model.
+//
+// Conventions
+//  - Content tables use integer ids (stable, human-friendly in admin URLs).
+//    Identity tables (User, Session) use UUID strings.
+//  - "Soft delete" = `deletedAt` set. Every read path MUST filter
+//    `deletedAt: null` (enforced centrally in src/server/services).
+//  - AuditLog is append-only and deliberately has NO foreign keys to content
+//    tables, so history survives deletion of the thing it describes.
+
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
-  // URL moved to prisma.config.ts as per Prisma 7 requirements
+  // Connection URL lives in prisma.config.ts (Prisma 7).
+}
+
+enum Role {
+  admin
+  editor
 }
 
 enum ContentStatus {
@@ -12,156 +27,212 @@ enum ContentStatus {
   published
 }
 
+enum JobStatus {
+  open
+  closed
+}
+
+// ───────────────────────── Identity ─────────────────────────
+
+model User {
+  id                String    @id @default(uuid())
+  /// Always stored lower-cased and trimmed (normalised in the service layer).
+  email             String    @unique
+  name              String
+  /// argon2id hash. Never returned by any API.
+  passwordHash      String
+  role              Role      @default(editor)
+  isActive          Boolean   @default(true)
+  passwordChangedAt DateTime  @default(now())
+  lastLoginAt       DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  /// Soft delete / account erasure marker.
+  deletedAt         DateTime?
+
+  sessions  Session[]
+  auditLogs AuditLog[]
+}
+
+model Session {
+  id         String    @id @default(uuid())
+  userId     String
+  /// SHA-256 of the random session token. The raw token only ever lives in
+  /// the user's cookie, so a database leak does not yield usable sessions.
+  tokenHash  String    @unique
+  createdAt  DateTime  @default(now())
+  lastUsedAt DateTime  @default(now())
+  /// Absolute expiry; the session dies here regardless of activity.
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  ip         String?
+  userAgent  String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+/// Used for brute-force lockout and IP throttling. Pruned periodically.
+model LoginAttempt {
+  id        Int      @id @default(autoincrement())
+  email     String
+  ip        String
+  success   Boolean
+  createdAt DateTime @default(now())
+
+  @@index([email, createdAt])
+  @@index([ip, createdAt])
+}
+
+model AuditLog {
+  id         Int      @id @default(autoincrement())
+  actorId    String?
+  /// Denormalised so the trail stays readable if the user is later removed.
+  actorEmail String
+  /// e.g. create | update | delete | login | login_failed | logout | user_create
+  action     String
+  /// e.g. BlogPost | Product | User | Session
+  entity     String
+  entityId   String?
+  /// Field NAMES that changed, never values (avoids copying PII/secrets).
+  metadata   Json?
+  ip         String?
+  requestId  String?
+  createdAt  DateTime @default(now())
+
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([actorId, createdAt])
+  @@index([entity, entityId])
+}
+
+// ───────────────────────── Singletons ─────────────────────────
+// Exactly one row each; created on first access (see singleton service).
+
 model HomepageContent {
-  id                    Int       @id @default(autoincrement())
-  heroHeadline          String?
-  heroSubheadline       String?
-  heroDescription       String?
-  ctaLabel              String?
-  ctaLink               String?
-  systemStatusLabel     String?
-  capabilityCardTag     String?
-  capabilityCardTitle   String?
-  capabilityCardDescription String?
-  scrollCueText         String?
-  accessLevelReadout    String?
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
-  auditLogs             AuditLog[] @relation("HomepageContentAuditLogs")
-}
-
-model NavItem {
-  id            Int      @id @default(autoincrement())
-  label         String
-  destination   String
-  displayOrder  Int
-  showPrimary   Boolean @default(true)
-  showFooter    Boolean @default(false)
-  showRadial    Boolean @default(false)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  auditLogs     AuditLog[] @relation("NavItemAuditLogs")
-}
-
-model Product {
-  id          Int           @id @default(autoincrement())
-  name        String
-  tagline     String?
-  description String?
-  specs       Json?
-  mediaRefs   String[]
-  slug        String @unique
-  status      ContentStatus @default(draft)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  auditLogs   AuditLog[] @relation("ProductAuditLogs")
-}
-
-model GalleryItem {
-  id           Int      @id @default(autoincrement())
-  mediaRef     String
-  caption      String?
-  category     String?
-  displayOrder Int
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  auditLogs    AuditLog[] @relation("GalleryItemAuditLogs")
-}
-
-model BlogPost {
-  id                Int          @id @default(autoincrement())
-  title             String
-  slug              String @unique
-  excerpt           String?
-  body              String?
-  coverImage        String?
-  tags              String[]
-  publishDate       DateTime?
-  seoTitle          String?
-  seoDescription    String?
-  status            ContentStatus @default(draft)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  auditLogs         AuditLog[] @relation("BlogPostAuditLogs")
-}
-
-model TeamMember {
-  id           Int      @id @default(autoincrement())
-  name         String
-  role         String
-  bio          String?
-  photoRef     String?
-  displayOrder Int
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  auditLogs    AuditLog[] @relation("TeamMemberAuditLogs")
-}
-
-model JobListing {
-  id          Int      @id @default(autoincrement())
-  title       String
-  department  String?
-  location    String?
-  description String?
-  status      String @default("open")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  auditLogs   AuditLog[] @relation("JobListingAuditLogs")
+  id                 Int      @id @default(autoincrement())
+  heroHeadline       String?
+  heroSubheadline    String?
+  heroDescription    String?
+  ctaLabel           String?
+  ctaLink            String?
+  systemStatusLabel  String?
+  scrollCueText      String?
+  accessLevelReadout String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 }
 
 model CompanyInfo {
-  id               Int      @id @default(autoincrement())
-  aboutContent     String?
-  visionStatement  String?
-  contactDetails   String?
-  socialLinks      Json?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  auditLogs        AuditLog[] @relation("CompanyInfoAuditLogs")
+  id              Int      @id @default(autoincrement())
+  aboutContent    String?
+  visionStatement String?
+  contactDetails  String?
+  socialLinks     Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 model SiteSettings {
   id                Int      @id @default(autoincrement())
-  defaultTheme      String @default("light")
-  showBullWatermark Boolean @default(true)
-  otherToggles      Json?
+  showBullWatermark Boolean  @default(true)
+  /// Lightweight feature flags: { "flagName": true }.
+  flags             Json     @default("{}")
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
-  auditLogs         AuditLog[] @relation("SiteSettingsAuditLogs")
 }
 
-model AuditLog {
-  id               Int      @id @default(autoincrement())
-  userId           String?
-  action           String
-  model            String
-  recordId         Int
-  timestamp        DateTime @default(now())
+// ───────────────────────── Content ─────────────────────────
 
-  homepageContentId Int?
-  homepageContent   HomepageContent? @relation("HomepageContentAuditLogs", fields: [homepageContentId], references: [id])
+model Product {
+  id          Int           @id @default(autoincrement())
+  name        String
+  slug        String        @unique
+  tagline     String?
+  description String?
+  /// Flat map of spec name -> value (validated on write).
+  specs       Json?
+  mediaRefs   String[]
+  status      ContentStatus @default(draft)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  deletedAt   DateTime?
 
-  navItemId        Int?
-  navItem          NavItem? @relation("NavItemAuditLogs", fields: [navItemId], references: [id])
+  @@index([status, deletedAt])
+}
 
-  productId        Int?
-  product          Product? @relation("ProductAuditLogs", fields: [productId], references: [id])
+model GalleryItem {
+  id           Int       @id @default(autoincrement())
+  mediaRef     String
+  caption      String?
+  category     String?
+  displayOrder Int       @default(0)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
 
-  galleryItemId    Int?
-  galleryItem      GalleryItem? @relation("GalleryItemAuditLogs", fields: [galleryItemId], references: [id])
+  @@index([deletedAt, displayOrder])
+}
 
-  blogPostId       Int?
-  blogPost         BlogPost? @relation("BlogPostAuditLogs", fields: [blogPostId], references: [id])
+model BlogPost {
+  id             Int           @id @default(autoincrement())
+  title          String
+  slug           String        @unique
+  excerpt        String?
+  /// Markdown source. Rendered by a safe renderer, never as raw HTML.
+  body           String?
+  coverImage     String?
+  tags           String[]
+  publishDate    DateTime?
+  seoTitle       String?
+  seoDescription String?
+  status         ContentStatus @default(draft)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  deletedAt      DateTime?
 
-  teamMemberId     Int?
-  teamMember       TeamMember? @relation("TeamMemberAuditLogs", fields: [teamMemberId], references: [id])
+  @@index([status, deletedAt, publishDate])
+}
 
-  jobListingId     Int?
-  jobListing       JobListing? @relation("JobListingAuditLogs", fields: [jobListingId], references: [id])
+model TeamMember {
+  id           Int       @id @default(autoincrement())
+  name         String
+  role         String
+  bio          String?
+  photoRef     String?
+  displayOrder Int       @default(0)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
 
-  companyInfoId    Int?
-  companyInfo      CompanyInfo? @relation("CompanyInfoAuditLogs", fields: [companyInfoId], references: [id])
+  @@index([deletedAt, displayOrder])
+}
 
-  siteSettingsId   Int?
-  siteSettings     SiteSettings? @relation("SiteSettingsAuditLogs", fields: [siteSettingsId], references: [id])
+model JobListing {
+  id          Int       @id @default(autoincrement())
+  title       String
+  department  String?
+  location    String?
+  description String?
+  status      JobStatus @default(open)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  @@index([status, deletedAt])
+}
+
+/// Personal data (name, email). Hard-deletable on request; see docs/PRIVACY.md.
+model ContactMessage {
+  id        Int       @id @default(autoincrement())
+  name      String
+  email     String
+  message   String
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([createdAt])
 }

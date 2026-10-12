@@ -117,7 +117,7 @@ export function CognitiveLoop() {
           <div className="font-mono text-xs text-accent uppercase tracking-widest mb-4">[ PHASE 02 ]</div>
           <h3 className="font-display text-3xl md:text-4xl uppercase mb-6 text-foreground">Cognitive Synthesis</h3>
           <p className="font-mono text-sm text-foreground/70 leading-relaxed uppercase">
-            Raw data is parsed through proprietary neural architectures. The system doesn't just see—it understands context, predicts intent, and formulates response strategies in real-time.
+            Raw data is parsed through proprietary neural architectures. The system doesn&apos;t just see—it understands context, predicts intent, and formulates response strategies in real-time.
           </p>
         </div>
 

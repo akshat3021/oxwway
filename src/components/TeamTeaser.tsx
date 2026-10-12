@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useRef } from "react";
 import { motion, useSpring, useTransform } from "framer-motion";
 import Link from "next/link";
-import type { LandingTeamMember } from "@/lib/landing";
+import type { LandingTeamMember } from "@/lib/landing-types";
 
 export function TeamTeaser({ members }: { members: LandingTeamMember[] }) {
   return (

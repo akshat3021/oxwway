@@ -7,31 +7,51 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
-    "postinstall": "prisma generate"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:unit": "vitest run tests/unit",
+    "test:integration": "vitest run tests/integration",
+    "e2e": "playwright test",
+    "db:migrate": "prisma migrate deploy",
+    "db:migrate:dev": "prisma migrate dev",
+    "db:seed": "tsx --conditions=react-server scripts/seed.ts",
+    "postinstall": "prisma generate",
+    "smoke": "node scripts/smoke.mjs",
+    "db:prune": "tsx --conditions=react-server scripts/prune.ts",
+    "admin:reset": "tsx --conditions=react-server scripts/reset-admin.ts"
   },
   "dependencies": {
+    "@node-rs/argon2": "^2.2.2",
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.9.0",
-    "@types/pg": "^8.20.4",
     "framer-motion": "^12.42.2",
     "gsap": "^3.15.0",
     "lucide-react": "^1.25.0",
-    "next": "16.2.10",
+    "next": "16.4.0",
     "pg": "^8.22.0",
+    "pino": "^10.4.0",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "server-only": "^0.0.1",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.0",
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
+    "@types/node": "^22.20.5",
+    "@types/pg": "^8.20.4",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "dotenv": "^17.4.2",
     "eslint": "^9",
-    "eslint-config-next": "16.2.10",
+    "eslint-config-next": "16.4.0",
     "prisma": "^7.9.0",
     "tailwindcss": "^4",
-    "ts-node": "^10",
-    "typescript": "^5"
+    "tsx": "^4.23.15",
+    "typescript": "^5",
+    "vitest": "^5.0.3"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

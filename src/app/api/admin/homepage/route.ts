@@ -1,47 +1,21 @@
-// src/app/api/admin/homepage/route.ts
-// CRUD API for HomepageContent model with server‑side role enforcement.
+import { requireCapability } from "@/server/auth/guard";
+import { readJson } from "@/server/http/body";
+import { revalidatePublicSite } from "@/server/http/revalidate";
+import { json } from "@/server/http/response";
+import { authedRoute } from "@/server/http/route";
+import { getSingletonDef, readSingleton, updateSingleton } from "@/server/services/singleton";
 
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { requireRoles } from '@/middleware/requireRoles';
-import { logAction } from '@/lib/audit';
-import { revalidatePublicSite } from '@/lib/revalidate';
+const def = getSingletonDef("homepage");
 
-export async function GET(request: NextRequest) {
-  const auth = requireRoles(request, ['admin', 'editor']);
-  if (auth instanceof Response) return auth;
-  const content = await prisma.homepageContent.findFirst();
-  return NextResponse.json(content);
-}
+export const GET = authedRoute({}, async ({ user }) => {
+  requireCapability(user, "content:read");
+  return json(await readSingleton(def));
+});
 
-export async function POST(request: NextRequest) {
-  const auth = requireRoles(request, ['admin', 'editor']);
-  if (auth instanceof Response) return auth;
-  const data = await request.json();
-  const created = await prisma.homepageContent.create({ data });
-  await logAction(auth.email, 'create', 'HomepageContent', created.id);
+export const PUT = authedRoute({}, async ({ req, user, ip, requestId }) => {
+  requireCapability(user, def.writeCapability);
+  const input = await readJson(req, def.schema);
+  const row = await updateSingleton(def, { actor: user, ip, requestId }, input);
   revalidatePublicSite();
-  return NextResponse.json(created, { status: 201 });
-}
-
-export async function PUT(request: NextRequest) {
-  const auth = requireRoles(request, ['admin', 'editor']);
-  if (auth instanceof Response) return auth;
-  const { id, ...updates } = await request.json();
-  const updated = await prisma.homepageContent.update({ where: { id }, data: updates });
-  await logAction(auth.email, 'update', 'HomepageContent', id);
-  revalidatePublicSite();
-  return NextResponse.json(updated);
-}
-
-export async function DELETE(request: NextRequest) {
-  // Only admin can delete core homepage content
-  const auth = requireRoles(request, ['admin']);
-  if (auth instanceof Response) return auth;
-  const { id } = await request.json();
-  await prisma.homepageContent.delete({ where: { id } });
-  await logAction(auth.email, 'delete', 'HomepageContent', id);
-  revalidatePublicSite();
-  return NextResponse.json({ success: true });
-}
+  return json(row);
+});

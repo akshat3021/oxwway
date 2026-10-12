@@ -47,9 +47,9 @@
   --color-foreground: var(--text-primary);
   --color-accent: var(--accent);
 
-  --font-display: 'Outfit', sans-serif;
-  --font-sans: 'Inter', sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  --font-display: var(--font-outfit), 'Outfit', sans-serif;
+  --font-sans: var(--font-inter), 'Inter', sans-serif;
+  --font-mono: var(--font-jetbrains), 'JetBrains Mono', monospace;
 
   --ease-mechanical: cubic-bezier(0.16, 1, 0.3, 1);
 

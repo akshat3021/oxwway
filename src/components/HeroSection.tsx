@@ -1,16 +1,16 @@
 import Link from "next/link";
 import { BullWatermark } from "@/components/BullWatermark";
 import { HeroCapabilityCards } from "@/components/HeroCapabilityCards";
-import type { LandingHero } from "@/lib/landing";
+import type { LandingHero } from "@/lib/landing-types";
 
 /** Landing hero. Server-rendered so the headline is in the initial HTML. */
-export function HeroSection({ hero }: { hero: LandingHero }) {
+export function HeroSection({ hero, showWatermark = true }: { hero: LandingHero; showWatermark?: boolean }) {
   return (
     <section
       id="hero-section"
       className="relative min-h-screen flex flex-col overflow-hidden pt-16"
     >
-      <BullWatermark />
+      {showWatermark && <BullWatermark />}
 
       <div className="relative flex-1 flex items-center z-10 px-6 md:px-16 lg:px-24 py-12">
         <div className="w-full grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-12 items-center">
@@ -77,7 +77,7 @@ export function HeroSection({ hero }: { hero: LandingHero }) {
                   style={{ backgroundColor: "var(--text-secondary)" }}
                 />
               </div>
-              <span>— Scroll to explore</span>
+              <span>— {hero.scrollCue}</span>
             </div>
           </div>
 

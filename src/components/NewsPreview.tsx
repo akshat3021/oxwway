@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import type { LandingPost } from "@/lib/landing";
+import type { LandingPost } from "@/lib/landing-types";
 
 /** Grid span that adapts to however many posts exist (1-3). */
 function spanFor(index: number, total: number): string {

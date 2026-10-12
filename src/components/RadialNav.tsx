@@ -45,23 +45,20 @@ interface RadialNavProps {
 }
 
 export function RadialNav({ isOpen, setIsOpen }: RadialNavProps) {
-  const [selectedIndex, setSelectedIndex] = useState<number>(0);
+  // `picked` is only set by user interaction; until then the item matching the current URL is selected.
+  const [picked, setPicked] = useState<number | null>(null);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const { theme } = useTheme();
   const router = useRouter();
   const pathname = usePathname();
+  const routeIndex = Math.max(0, NAV_ITEMS.findIndex((item) => pathname.startsWith(item.href)));
+  const selectedIndex = picked ?? routeIndex;
 
-  // Find initial active index matching current path
-  useEffect(() => {
-    const idx = NAV_ITEMS.findIndex((item) => pathname.startsWith(item.href));
-    if (idx !== -1) {
-      setSelectedIndex(idx);
-    }
-  }, [pathname]);
 
   const handleNavigate = useCallback(
     (href: string) => {
       setIsOpen(false);
+      setPicked(null);
       router.push(href);
     },
     [router, setIsOpen]
@@ -76,10 +73,10 @@ export function RadialNav({ isOpen, setIsOpen }: RadialNavProps) {
         setIsOpen(false);
       } else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
         e.preventDefault();
-        setSelectedIndex((prev) => (prev + 1) % NAV_ITEMS.length);
+        setPicked((prev) => ((prev ?? routeIndex) + 1) % NAV_ITEMS.length);
       } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
         e.preventDefault();
-        setSelectedIndex((prev) => (prev - 1 + NAV_ITEMS.length) % NAV_ITEMS.length);
+        setPicked((prev) => ((prev ?? routeIndex) - 1 + NAV_ITEMS.length) % NAV_ITEMS.length);
       } else if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
         const activeIdx = hoveredIndex !== null ? hoveredIndex : selectedIndex;
@@ -89,7 +86,7 @@ export function RadialNav({ isOpen, setIsOpen }: RadialNavProps) {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, hoveredIndex, selectedIndex, handleNavigate, setIsOpen]);
+  }, [isOpen, hoveredIndex, selectedIndex, routeIndex, handleNavigate, setIsOpen]);
 
   if (!isOpen) return null;
 
@@ -162,7 +159,7 @@ export function RadialNav({ isOpen, setIsOpen }: RadialNavProps) {
                   className="transition-all duration-200"
                   onMouseEnter={() => {
                     setHoveredIndex(idx);
-                    setSelectedIndex(idx);
+                    setPicked(idx);
                   }}
                   onMouseLeave={() => setHoveredIndex(null)}
                   onClick={() => handleNavigate(item.href)}
@@ -259,7 +256,7 @@ export function RadialNav({ isOpen, setIsOpen }: RadialNavProps) {
               <button
                 key={item.code}
                 onClick={() => handleNavigate(item.href)}
-                onMouseEnter={() => setSelectedIndex(idx)}
+                onMouseEnter={() => setPicked(idx)}
                 className="flex items-center justify-between p-4 border text-left font-mono text-xs uppercase tracking-widest transition-all"
                 style={{
                   borderColor: isActive ? "var(--accent)" : "var(--glass-border)",
